@@ -1,0 +1,221 @@
+﻿@model BookManagement.Models.BookSearchArg
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2 style="font-family:Microsoft JhengHei;">圖書維護</h2>
+
+
+
+<div class="form-horizontal">
+    <div class="form-group">
+        <label class="control-label col-md-2" for="BookName">書名</label>
+        <div class="col-md-10">
+            <input class="form-control" id="BookName" name="BookName" type="text" value="">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2" for="BookClassName">圖書類別</label>
+        <div class="col-md-10">
+            <select class="form-control" style="width:30%;" id="BookClassName" name="BookClassName">
+                @*執行優先權:style>class>外部載入*@
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2" for="UserName">借閱人</label>
+        <div class="col-md-10">
+            <select class="form-control" style="width:30%;" id="UserName" name="UserName"></select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-md-2" for="CodeName">借閱狀態</label>
+        <div class="col-md-10">
+            <select class="form-control" style="width:30%;" id="CodeName" name="CodeName"></select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-md-2">
+        </div>
+        <div class="col-md-10">
+            <input type="submit" id="searchbotton" value="查詢" class="btn" style="background-color: #99b2db; color:#194284">
+            <input type="button" value="新增" onclick="location.href='/Book/InsertBook'" class="btn" style="background-color: #99b2db; color:#194284">
+            <input type="button" value="清除" onclick="location.href='/Book'" class="btn" style="background-color: #99b2db; color:#194284">
+        </div>
+    </div>
+
+    <div id="book_grid"></div>
+</div>
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        //***可將3個下拉式選單合起來，把id和url當參數弄到一個function
+        ///類別-->寫入Kendo套件，將kendoDropDownList與資料連結
+        $("#BookClassName").kendoDropDownList({
+            dataTextField: "Text",
+            dataValueField: "Value",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Book/GetDropDownListClass",
+                        type: "post",
+                        dataType: "json"
+                    }
+                }
+            },
+            optionLabel: "全部類別"
+        });
+        ///借閱者-->寫入Kendo套件，將kendoDropDownList與資料連結
+        $("#UserName").kendoDropDownList({
+            dataTextField: "Text",
+            dataValueField: "Value",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Book/GetDropDownListUserName",
+                        type: "post",
+                        dataType: "json"
+                    }
+                }
+            },
+            optionLabel: "全部借閱者"
+        });
+        ///借閱狀態-->寫入Kendo套件，將kendoDropDownList與資料連結
+        $("#CodeName").kendoDropDownList({
+            dataTextField: "Text",
+            dataValueField: "Value",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Book/GetDropDownListCodeName",
+                        type: "post",
+                        dataType: "json"
+                    }
+                }
+            },
+            optionLabel: "全部借閱狀態"
+        });
+
+        //initDropDownList("#CodeName", "/Book/GetDropDownListCodeName")
+        //function initDropDownList(selector, url) {
+        //    $(selector).kendoDropDownList({
+        //        dataTextField: "Text",
+        //        dataValueField: "Value",
+        //        dataSource: {
+        //            transport: {
+        //                read: {
+        //                    url: url,
+        //                    type: "post",
+        //                    dataType: "json"
+        //                }
+        //            }
+        //        },
+        //        optionLabel: "全部借閱狀態"
+        //    });
+        //}
+
+    });
+
+    //連結表格資料
+    $("#searchbotton").click(function () {    //***點一下就會再增加一個表格，改
+        $("#book_grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read:          //給controller讀的資料
+                    {
+                        url: "/Book/GetBookCondtioin",
+                        type: "post",
+                        dataType: "json",
+                        data: {
+                            BookName: $("#BookName").val(),
+                            UserName: $("#UserName").data("kendoDropDownList").value(),            //給電腦看的，所以不能取Text，在kendoDropDownList用value();
+                            CodeName: $("#CodeName").data("kendoDropDownList").value(),
+                            BookClassName: $("#BookClassName").data("kendoDropDownList").value()
+                        }
+                    }
+                },
+                pageSize: 20
+            },
+            height: 550,
+            groupable: true,
+            sortable: true,
+            pageable: {
+                refresh: true,
+                pageSizes: true,
+                buttonCount: 8
+            },
+
+            columns: [
+                {
+                    hidden: true, field: "BookID"   //隱藏的欄位，取得BookId的代碼
+                }, {
+                    field: "BookClassName"
+                }, {
+                    field: "BookName"
+                }, {
+                    field: "BookBoughtDate"
+                }, {
+                    field: "UserName"
+                }, {
+                    field: "CodeName"
+                }, {
+                    command: { click: lendbookBook, text: "借閱紀錄", width: "130px" }
+                }, {
+                    command: { click: updateBook, text: "編輯", width: "60px" }
+                }, {
+                    command: { click: deleteBook, text: "刪除", width: "60px" }
+                }]
+        });
+    });
+
+    //刪除書籍
+    function deleteBook(e) {
+        e.preventDefault();
+        var Check = confirm('確定是否刪除這筆紀錄?');
+        if (Check == true) {
+            var tr = $(e.target).closest("tr");
+            var row = this.dataItem(tr).BookID;
+
+            $.ajax({
+                type: "POST",
+                url: "/Book/DeleteBook",
+                data: "BookID=" + row,
+                dataType: "json",
+                success: function (response) {
+                    if (response == true) {
+                        $(tr).remove();         
+                        alert("圖書已刪除");
+                    }
+                },
+                error: function (error) {
+                    alert("系統發生錯誤");
+                }
+            });
+        }
+    };
+    //連結updateBook頁面
+    function updateBook(e) {
+        var tr = $(e.target).closest("tr");
+        var row = this.dataItem(tr).BookID;
+
+        location.href = "/Book/UpdateBook?BookID=" + row;
+
+    }
+
+    //連結lendbookBook頁面
+    function lendbookBook(e) {
+        var tr = $(e.target).closest("tr");
+        var row = this.dataItem(tr).BookID;
+
+        location.href = "/Book/BookLendRecord?BookID=" + row;
+
+    }
+
+</script>
+

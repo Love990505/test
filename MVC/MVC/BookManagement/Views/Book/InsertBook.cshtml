@@ -1,0 +1,111 @@
+﻿@model BookManagement.Models.Books
+@{
+    ViewBag.Title = "InsertBook";
+}
+
+@* asp-controller:控制器名稱，asp-action:動作方法的名稱 *@
+<form asp-controller="BookController" asp-action="InsertBook" method="post">
+    <h2 style="font-family:Microsoft JhengHei;">新增圖書</h2>
+
+
+
+    <div class="form-horizontal">
+        <hr />
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookName">書名</label>
+            <div class="col-md-10">
+                <input class="form-control" data-val="true" data-val-required="此欄位必填" id="BookName" name="BookName" type="text" value="">
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookName" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookAuthor">作者</label>
+            <div class="col-md-10">
+                <input class="form-control" data-val="true" data-val-required="此欄位必填" id="BookAuthor" name="BookAuthor" type="text" value="">
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookAuthor" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookPublisher">出版社</label>
+            <div class="col-md-10">
+                <input class="form-control" data-val="true" data-val-required="此欄位必填" id="BookPublisher" name="BookPublisher" type="text" value="">
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookPublisher" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookNote">內容簡介</label>
+            <div class="col-md-10">
+                <textarea class="form-control" cols="10" data-val="true" data-val-required="此欄位必填" id="TextArea" name="BookNote" onkeyup="WordsDeal();" rows="10"></textarea>
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookNote" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookBoughtDate">購買日期</label>
+            <div class="col-md-10">
+                <input value="2019-09-05" class="form-control" data-val="true" data-val-required="此欄位必填" style="width:30%;" id="BookBoughtDate" name="BookBoughtDate" type="Date">
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookBoughtDate" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-md-2 required" for="BookClassName">圖書類別</label>
+            <div class="col-md-10">
+                <select class="form-control" data-val="true" data-val-required="此欄位必填" style="width:30%;" id="BookClassID" name="BookClassID"></select>
+                <span class="field-validation-valid text-danger" data-valmsg-for="BookClassID" data-valmsg-replace="true"></span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" id="insertBook" value="存檔" class="btn" style="background-color: #99b2db; color:#194284">
+            </div>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#BookBoughtDate").kendoDatePicker({
+            value: new Date(),
+            min: "1900-01-01",
+            max: new Date(),
+            dateInput: true,
+            format: "yyyy-MM-dd"
+        });
+        ///類別-->寫入Kendo套件，將kendoDropDownList與資料連結
+        $("#BookClassID").kendoDropDownList({
+            dataTextField: "Text",
+            dataValueField: "Value",
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/Book/GetDropDownListClass",
+                        type: "post",
+                        dataType: "json"
+                    }
+                }
+            },
+        });
+    });
+
+    //內容簡介字數控制
+    function WordsDeal() {
+        var curLength = $("#TextArea").val().length;
+        if (curLength > 1000) {
+            var num = $("#TextArea").val().substr(0, 1000);
+            $("#TextArea").val(num);
+            alert("超過字數限制(1000字)，多出的字將被移除！");
+        }
+    }
+
+
+
+</script>
+
+<div>
+    <input type="button" value="返回" onclick="location.href='/Book'" class="btn" style="background-color: #99b2db; color:#194284">
+</div>
